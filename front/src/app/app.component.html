@@ -4,9 +4,53 @@
 <div style="display: flex">
   <section style="flex: 1">
     <h2>Health</h2>
+    <code
+      [innerHTML]="health | json_pretty_print"
+      [ngClass]="{
+        'good-job-bro': healthy === 'good-job-bro',
+        'not-that-bad': healthy === 'not-that-bad',
+        argh: healthy === 'argh'
+      }"
+    ></code>
+    <div
+      *ngIf="errorMessage"
+      class="error-message"
+      style="color: #ada400; margin-top: 10px; font-size: 15px"
+    >
+      {{ errorMessage }}
+    </div>
+    <button class="refreshbutt" onclick="window.location.reload()">
+      Refresh
+    </button>
+    <button class="closebutt" onclick="window.close()">Close</button>
   </section>
 
   <section style="flex: 1">
     <h2>Chat</h2>
+    <form (ngSubmit)="postMessage(myForm.form.value)" #myForm="ngForm">
+      <input
+        id="username"
+        name="username"
+        type="text"
+        placeholder="Username"
+        ngModel
+      />
+      <input
+        id="message"
+        name="message"
+        type="text"
+        placeholder="Message"
+        ngModel
+      />
+      <br />
+      <button type="submit">Send</button>
+      <br />
+      {{ formError }}
+    </form>
+
+    <article *ngFor="let msg of messages">
+      <strong>From: {{ msg.username }}</strong>
+      <p>{{ msg.message }}</p>
+    </article>
   </section>
 </div>
