@@ -1,0 +1,11 @@
+stages:
+  - build
+  - test
+  - deploy
+
+cache:
+  paths:
+    - back/vendor
+
+include:
+  - "back/.gitlab-ci.yml"

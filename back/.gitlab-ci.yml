@@ -1,0 +1,67 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  ANSIBLE_PORT: "22"
+  ANSIBLE_USER: "your_ansible_user"
+  ANSIBLE_SUDO_PASSWORD: "your_ansible_sudo_password"
+  CLIENT_HOST: "your_client_host"
+  MYSQL_DEVELOP_DATABASE: "your_develop_database"
+  MYSQL_DATABASE: "nsa"
+  MYSQL_USER: "root"
+  MYSQL_PASSWORD: "abcd1234"
+  MYSQL_HOST: "your_mysql_host" # Assurez-vous de remplacer cela par votre hôte MySQL
+  MYSQL_PORT: "3306" # Assurez-vous que le port MySQL est correct
+
+build:
+  stage: build
+  image: php:7.4-cli
+  before_script:
+    - apt-get update && apt-get install -y zip
+    - curl -sS https://getcomposer.org/installer | php
+    - mv composer.phar /usr/local/bin/composer
+  script:
+    - php -v
+    - cd back || exit 1 # Sortir si le répertoire n'existe pas
+    - composer install --no-interaction --no-progress --no-suggest
+  artifacts:
+    name: back1.0.0
+    paths:
+      - dist/
+  after_script:
+    - zip back1.0.0.zip dist/
+    - scp -o StrictHostKeyChecking=no -i /path/to/private/key.pem back1.0.0.zip root@192.168.176.5:/var/www
+
+test:
+  stage: test
+  image: dalil01/nsa-lsa-back:1.0.0
+  dependencies:
+    - build
+  script:
+    - cd back || exit 1 # Sortir si le répertoire n'existe pas
+    - cp .env.example .env
+    - echo "APP_NAME=Laravel" >> .env
+    - echo "APP_ENV=local" >> .env
+    - echo "APP_KEY=base64:h55oToUypq1BJwhcBAbtCnKscJGGS7xXF3zoDNf/yWE=" >> .env
+    - echo "APP_DEBUG=true" >> .env
+    - echo "APP_URL=http://localhost" >> .env
+    - echo "LOG_CHANNEL=stderr" >> .env
+    - echo "DB_CONNECTION=mysql" >> .env
+    - echo "DB_HOST=$MYSQL_HOST" >> .env
+    - echo "DB_PORT=$MYSQL_PORT" >> .env
+    - echo "DB_DATABASE=$MYSQL_DATABASE" >> .env
+    - echo "DB_USERNAME=$MYSQL_USER" >> .env
+    - echo "DB_PASSWORD=$MYSQL_PASSWORD" >> .env
+
+deploy:
+  stage: deploy
+  dependencies:
+    - test
+  only:
+    - main
+  image: alpinelinux/ansible:latest
+  script:
+    - apk add --no-cache sshpass
+    - ansible-playbook -i ansible/ansible_deploy_back/deploy-black.yml ansible/ansible_deploy_back/deploy-black.yml
