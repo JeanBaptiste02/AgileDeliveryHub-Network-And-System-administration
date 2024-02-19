@@ -1,0 +1,47 @@
+server {
+  # Listen for connections on port 80 (HTTP)
+  listen 80;
+  # Add this if using IPv6 on your server
+  # listen [::]:80;
+
+  server_name localhost
+
+  # The root directory for incoming web requests.
+  # Set this to the full path to your Laravel app's `public` subdirectory,
+  # which is the entry point to Laravel applications.
+  root /srv/www/back/public;
+
+  add_header X-Frame-Options "SAMEORIGIN";
+
+  add_header X-Content-Type-Options "nosniff";
+
+  # Use PHP (and not HTML) index files (because Laravel is PHP-based).
+  index index.php;
+
+  # Specify UTF-8 character encoding in Content-Type HTTP response header fields.
+  charset utf-8;
+
+  # The order recommended by Laravel for Nginx to check for the existence of
+  # files based on a URI or query string.
+  location / {
+    try_files $uri $uri/ /index.php?$query_string;
+  }
+
+  # Disable logging related to favicon and robots.txt files.
+  location = /favicon.ico { access_log off; log_not_found off; }
+  location = /robots.txt  { access_log off; log_not_found off; }
+
+  # Redirect to the home page (i.e. /index.php) on 404 errors.
+  error_page 404 /index.php;
+
+  # Laravel's recommended for handling requests for PHP files.
+  location ~ \.php$ {
+    fastcgi_pass unix:/var/run/php/php7.1-fpm.sock;
+    fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+    include fastcgi_params;
+  }
+
+  location ~ /\.(?!well-known).* {
+    deny all;
+  }
+}

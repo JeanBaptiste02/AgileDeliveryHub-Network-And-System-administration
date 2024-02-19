@@ -1,0 +1,61 @@
+---
+- name: Deploy Laravel Application
+  hosts: back
+  become: true
+  vars:
+    app_name: "back"
+    app_directory: "./projet-nsa-T700"
+    nginx_conf_file: "/etc/nginx/sites-available/default"
+    nginx_conf_file2: "/etc/nginx/sites-available/site.conf"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: present
+
+    - name: Install UNZIP
+      apt:
+        name: unzip
+        state: present
+
+    - name: Install ZIP
+      apt:
+        name: zip
+        state: present
+
+    - name: Install composer
+      get_url: 
+        url: https://getcomposer.org/installer
+        dest: /tmp/composer-setup.php
+        mode: '0755'
+
+    - name: Install composer globally
+      shell: php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+
+
+    - name: Configure NGINX
+      template:
+        src: "nginx.conf.j2"
+        dest: "{{ nginx_conf_file2 }}"
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Configure NGINX
+      template:
+        src: "nginx.conf.j2"
+        dest: "{{ nginx_conf_file }}"
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: restarted
+
