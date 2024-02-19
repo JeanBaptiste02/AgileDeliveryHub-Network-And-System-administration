@@ -1,0 +1,20 @@
+image: node:18.13
+
+before_script:
+  - npm install -g firebase-tools @angular/cli
+
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  environment:
+    name: staging
+    url: https://fir-ci-112a2.web.app/
+  script:
+    - npm install
+    - ng build
+    - firebase deploy --token $FIREBASE_TOKEN
+  only:
+    refs:
+      - main
