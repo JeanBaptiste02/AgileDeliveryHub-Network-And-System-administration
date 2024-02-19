@@ -1,0 +1,35 @@
+# Define the stages of the pipeline
+stages:
+  - build
+  - test
+#  - deploy
+
+# Define variables for easy modification
+variables:
+  PHP_VERSION: "7.1.8"
+
+# Define jobs for each stage
+build:
+  stage: build
+  image: php:${PHP_VERSION}-cli
+  before_script:
+    - apt-get update && apt-get install -y zip
+    - curl -sS https://getcomposer.org/installer | php
+    - mv composer.phar /usr/local/bin/composer
+  script:
+    - php -v
+    - composer install --no-interaction --no-progress --no-suggest
+  artifacts:
+    name: back1.0.0
+    paths:
+      - dist/
+  after_script:
+    - zip back1.0.0.zip dist/
+    - scp -o StrictHostKeyChecking=no -i ./../.ssh/id_rsa back1.0.0.zip root@192.168.176.5:/var/www
+
+test:
+  stage: test
+  image: php:${PHP_VERSION}-cli
+  script:
+    - php vendor/bin/phpunit
+
