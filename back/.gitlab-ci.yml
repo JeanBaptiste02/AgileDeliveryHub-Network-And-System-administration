@@ -12,8 +12,8 @@ variables:
   MYSQL_DATABASE: "nsa"
   MYSQL_USER: "root"
   MYSQL_PASSWORD: "abcd1234"
-  MYSQL_HOST: "your_mysql_host" # Assurez-vous de remplacer cela par votre hôte MySQL
-  MYSQL_PORT: "3306" # Assurez-vous que le port MySQL est correct
+  MYSQL_HOST: "your_mysql_host"
+  MYSQL_PORT: "3306"
 
 build:
   stage: build
@@ -23,24 +23,20 @@ build:
     - curl -sS https://getcomposer.org/installer | php
     - mv composer.phar /usr/local/bin/composer
   script:
-    - php -v
-    - cd back || exit 1 # Sortir si le répertoire n'existe pas
-    - composer install --no-interaction --no-progress --no-suggest
+    - cd back
+    - rm -rf composer.lock
+    - composer install --no-scripts --optimize-autoloader
+    - zip -r ../artifact.zip vendor/
   artifacts:
-    name: back1.0.0
     paths:
-      - dist/
-  after_script:
-    - zip back1.0.0.zip dist/
-    - scp -o StrictHostKeyChecking=no -i /path/to/private/key.pem back1.0.0.zip root@192.168.176.5:/var/www
+      - artifact.zip
 
 test:
   stage: test
-  image: dalil01/nsa-lsa-back:1.0.0
   dependencies:
     - build
   script:
-    - cd back || exit 1 # Sortir si le répertoire n'existe pas
+    - cd back || exit 1 # Exit if the directory doesn't exist
     - cp .env.example .env
     - echo "APP_NAME=Laravel" >> .env
     - echo "APP_ENV=local" >> .env
@@ -64,4 +60,4 @@ deploy:
   image: alpinelinux/ansible:latest
   script:
     - apk add --no-cache sshpass
-    - ansible-playbook -i ansible/ansible_deploy_back/deploy-black.yml ansible/ansible_deploy_back/deploy-black.yml
+    - ansible-playbook -i ansible/ansible_deploy_back/inventory.yml ansible/ansible_deploy_back/deploy-black.yml
