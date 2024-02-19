@@ -1,0 +1,19 @@
+- name: Deploy Angular Frontend
+  hosts: front
+  become: true
+  vars:
+    node_version: "8.9.4"
+    app_name: "front"
+    app_directory: "./projet-nsa-T700/front"
+
+tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+    
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: latest
+      when: ansible_os_family == 'Debian'

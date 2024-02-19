@@ -1,0 +1,50 @@
+---
+- name: Deploy Angular Frontend
+  hosts: front
+  become: true
+  vars:
+    app_name: "front"
+    app_directory: "./projet-nsa-T700"
+    nginx_conf_file: "/etc/nginx/sites-available/default"
+    nginx_conf_file2: "/etc/nginx/sites-available/site.conf"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: present
+
+    - name: Install UNZIP
+      apt:
+        name: unzip
+        state: present
+
+    - name: Install ZIP
+      apt:
+        name: zip
+        state: present
+
+    - name: Configure NGINX
+      template:
+        src: "nginx.conf.j2"
+        dest: "{{ nginx_conf_file2 }}"
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Configure NGINX
+      template:
+        src: "nginx.conf.j2"
+        dest: "{{ nginx_conf_file }}"
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Restart NGINX
+      service:
+        name: nginx
+        state: restarted

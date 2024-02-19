@@ -1,0 +1,97 @@
+---
+- name: Deploy Angular Frontend
+  hosts: front
+  become: true
+  vars:
+    node_version: "8.9.4"
+    app_name: "front"
+    app_directory: "./projet-nsa-T700"
+    nginx_conf_file: "/etc/nginx/sites-available/{{ app_name }}"
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install curl and git (required for nvm installation)
+      apt:
+        name:
+          - curl
+          - git
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install nvm
+      shell: |
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+        source ~/.bashrc
+      args:
+        executable: /bin/bash
+      environment:
+        NVM_DIR: "/root/.nvm"
+        NODE_VERSION: "{{ node_version }}"
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Node.js with nvm
+      shell: |
+        nvm install "{{ node_version }}"
+      args:
+        executable: /bin/bash
+      environment:
+        NVM_DIR: "/root/.nvm"
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Angular CLI with Node.js 8.9.4
+      shell: |
+        nvm use "{{ node_version }}" && npm install -g @angular/cli@7.1.4
+      args:
+        executable: /bin/bash
+      environment:
+        NVM_DIR: "/root/.nvm"
+
+    - name: Clone your Angular app repository
+      git:
+        repo: git@gitlab.com:nsa-grp/projet-nsa-T700.git
+        dest: "{{ app_directory }}"
+        version: main
+        accept_hostkey: yes
+        key_file: "./id_rsa"
+      register: git_clone
+      environment:
+        NVM_DIR: "/root/.nvm"
+
+    - name: Install project dependencies
+      command: npm install
+      args:
+        chdir: "{{ app_directory }}/front"
+
+    - name: Build Angular app
+      command: npm build
+      args:
+        chdir: "{{ app_directory }}/front"
+      environment:
+        NVM_DIR: "/root/.nvm"
+
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: present
+
+    - name: Configure NGINX
+      template:
+        src: "nginx.conf.j2"
+        dest: "{{ nginx_conf_file }}"
+      notify: Restart NGINX
+
+    - name: Enable NGINX site
+      file:
+        src: "{{ nginx_conf_file }}"
+        dest: "/etc/nginx/sites-enabled/{{ app_name }}"
+        state: link
+      notify: Restart NGINX
+
+  handlers:
+    - name: Restart NGINX
+      service:
+        name: nginx
+        state: restarted
