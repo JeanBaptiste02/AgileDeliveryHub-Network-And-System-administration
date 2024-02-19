@@ -1,0 +1,33 @@
+---
+- name: Set up MySQL Server
+  hosts: mysql
+  become: true
+  vars:
+    root_password: "abcd1234"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install MariaDB server
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - mariadb-server
+        - python3
+        - python3-mysqldb
+    
+    - name: Create the database if it doesn't exist
+      mysql_db:
+        name: nsa
+        state: present
+        login_user: root
+        login_password: abcd1234
+
+  handlers:
+    - name: Restart MySQL
+      service:
+        name: mysql
+        state: restarted
