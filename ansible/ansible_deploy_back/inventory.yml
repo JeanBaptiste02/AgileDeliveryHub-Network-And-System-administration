@@ -1,0 +1,20 @@
+all:
+  vars:
+    ansible_port: "{{ lookup('env', 'ANSIBLE_PORT') }}"
+    ansible_user: "{{ lookup('env', 'ANSIBLE_USER') }}"
+    ansible_password: "{{ lookup('env', 'ANSIBLE_SUDO_PASSWORD') }}"
+    ansible_sudo_pass: "{{ lookup('env', 'ANSIBLE_SUDO_PASSWORD') }}"
+    ansible_mysql_db: "{{ lookup('env', 'MYSQL_DATABASE') }}"
+    ansible_mysql_user: "{{ lookup('env', 'MYSQL_USER') }}"
+    ansible_mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') }}"
+    ansible_mysql_host: "{{ lookup('env', 'MYSQL_HOST') }}"
+    ansible_mysql_port: "{{ lookup('env', 'MYSQL_PORT') }}"
+  hosts:
+    server:
+      ansible_host: "{{ lookup('env', 'SERVER_HOST') }}"
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+    client:
+      ansible_host: "{{ lookup('env', 'CLIENT_HOST') }}"
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
